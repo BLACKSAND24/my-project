@@ -1,0 +1,1 @@
+class BlackScholes: pass

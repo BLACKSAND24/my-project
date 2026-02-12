@@ -1,0 +1,28 @@
+﻿# Python cache
+__pycache__/
+*.pyc
+*.pyo
+
+# Virtual environments
+venv/
+env/
+ado_env/
+
+# IDE folders
+.vscode/
+.idea/
+
+# Logs
+*.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# OneDrive/system folders (safety)
+AppData/
+Documents/
+Downloads/
+Pictures/
+Music/
+Videos/

@@ -1,0 +1,1 @@
+class TradeThrottle: pass

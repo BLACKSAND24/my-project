@@ -1,0 +1,1 @@
+class AIRiskCommittee: pass
