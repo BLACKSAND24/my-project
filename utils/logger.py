@@ -1,41 +1,16 @@
-
-"""
-Centralized logging utility for the Financial Organism
-Institutional-grade, console-safe, extensible to files / ELK later
-"""
-
-import logging
+﻿import logging
 import sys
 from config import CONFIG
 
-
 def get_logger(name: str) -> logging.Logger:
-    """
-    Returns a configured logger instance
-    """
-
     logger = logging.getLogger(name)
-
-    # Prevent duplicate handlers
     if logger.handlers:
         return logger
-
-    log_level = CONFIG.get("LOG_LEVEL", "INFO").upper()
-    level = getattr(logging, log_level, logging.INFO)
-
+    level = getattr(logging, str(CONFIG.get("LOG_LEVEL","INFO")).upper(), logging.INFO)
     logger.setLevel(level)
-
-    handler = logging.StreamHandler(sys.stdout)
-    handler.setLevel(level)
-
-    formatter = logging.Formatter(
-        fmt="%(asctime)s | %(levelname)-8s | %(name)s | %(message)s",
-        datefmt="%Y-%m-%d %H:%M:%S",
-    )
-
-    handler.setFormatter(formatter)
-    logger.addHandler(handler)
-
+    h = logging.StreamHandler(sys.stdout)
+    h.setLevel(level)
+    h.setFormatter(logging.Formatter("%(asctime)s | %(levelname)-8s | %(name)s | %(message)s", "%Y-%m-%d %H:%M:%S"))
+    logger.addHandler(h)
     logger.propagate = False
-
     return logger

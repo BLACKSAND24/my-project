@@ -1,0 +1,703 @@
+From 7c72b4789addc7eddfe82ebc326194581726e4cd Mon Sep 17 00:00:00 2001
+From: Bugingo Twesiime Will <willbugingo@gmail.com>
+Date: Thu, 12 Feb 2026 13:09:03 +0300
+Subject: [PATCH] Initial commit
+
+---
+ .gitignore                         |  28 ++++++
+ README.md                          |   3 +
+ RUNBOOK.md                         |   3 +
+ capital/capital_allocator.py       |   1 +
+ capital/capital_flight_detector.py |   1 +
+ config.py                          |  54 +++++++++++
+ data/fetch_data.py                 |   1 +
+ data/preprocess.py                 |   1 +
+ evolution/genetic_engine.py        |   1 +
+ evolution/strategy_genome.py       |   1 +
+ execution/execution_engine.py      |   1 +
+ execution/shadow_book.py           |   1 +
+ execution/trade_throttle.py        |   1 +
+ generate_financial_organism.zip    | Bin 0 -> 11996 bytes
+ governance/ai_risk_committee.py    |   1 +
+ governance/go_live_checklist.py    |   1 +
+ macro/causal_engine.py             |   1 +
+ main.py                            | 147 +++++++++++++++++++++++++++++
+ monitoring/analytics.py            |   1 +
+ monitoring/dashboard.py            |   1 +
+ monitoring/telegram_alerts.py      |   1 +
+ risk/black_swan_hedger.py          |   1 +
+ risk/convexity_engine.py           |   1 +
+ risk/derivatives_pricing.py        |   1 +
+ risk/kill_switch.py                |   3 +
+ risk/risk_manager.py               |   1 +
+ risk/stoploss_manager.py           |   1 +
+ simulation/crisis_simulator.py     |   1 +
+ strategies/ppo_env.py              |   1 +
+ strategies/quant_models.py         |   1 +
+ strategies/strategy_base.py        |   1 +
+ strategies/train_ppo.py            |   1 +
+ utils/encryption.py                |   1 +
+ utils/latency_manager.py           |   1 +
+ utils/logger.py                    |  41 ++++++++
+ 35 files changed, 306 insertions(+)
+ create mode 100644 .gitignore
+ create mode 100644 README.md
+ create mode 100644 RUNBOOK.md
+ create mode 100644 capital/capital_allocator.py
+ create mode 100644 capital/capital_flight_detector.py
+ create mode 100644 config.py
+ create mode 100644 data/fetch_data.py
+ create mode 100644 data/preprocess.py
+ create mode 100644 evolution/genetic_engine.py
+ create mode 100644 evolution/strategy_genome.py
+ create mode 100644 execution/execution_engine.py
+ create mode 100644 execution/shadow_book.py
+ create mode 100644 execution/trade_throttle.py
+ create mode 100644 generate_financial_organism.zip
+ create mode 100644 governance/ai_risk_committee.py
+ create mode 100644 governance/go_live_checklist.py
+ create mode 100644 macro/causal_engine.py
+ create mode 100644 main.py
+ create mode 100644 monitoring/analytics.py
+ create mode 100644 monitoring/dashboard.py
+ create mode 100644 monitoring/telegram_alerts.py
+ create mode 100644 risk/black_swan_hedger.py
+ create mode 100644 risk/convexity_engine.py
+ create mode 100644 risk/derivatives_pricing.py
+ create mode 100644 risk/kill_switch.py
+ create mode 100644 risk/risk_manager.py
+ create mode 100644 risk/stoploss_manager.py
+ create mode 100644 simulation/crisis_simulator.py
+ create mode 100644 strategies/ppo_env.py
+ create mode 100644 strategies/quant_models.py
+ create mode 100644 strategies/strategy_base.py
+ create mode 100644 strategies/train_ppo.py
+ create mode 100644 utils/encryption.py
+ create mode 100644 utils/latency_manager.py
+ create mode 100644 utils/logger.py
+
+diff --git a/.gitignore b/.gitignore
+new file mode 100644
+index 0000000..1c851ec
+--- /dev/null
++++ b/.gitignore
+@@ -0,0 +1,28 @@
++﻿# Python cache
++__pycache__/
++*.pyc
++*.pyo
++
++# Virtual environments
++venv/
++env/
++ado_env/
++
++# IDE folders
++.vscode/
++.idea/
++
++# Logs
++*.log
++
++# OS files
++.DS_Store
++Thumbs.db
++
++# OneDrive/system folders (safety)
++AppData/
++Documents/
++Downloads/
++Pictures/
++Music/
++Videos/
+diff --git a/README.md b/README.md
+new file mode 100644
+index 0000000..7f87bbd
+--- /dev/null
++++ b/README.md
+@@ -0,0 +1,3 @@
++# Financial Organism
++
++Run in PAPER mode only.
+diff --git a/RUNBOOK.md b/RUNBOOK.md
+new file mode 100644
+index 0000000..737a7ce
+--- /dev/null
++++ b/RUNBOOK.md
+@@ -0,0 +1,3 @@
++# Operations Runbook
++
++Emergency: Trigger Kill Switch
+diff --git a/capital/capital_allocator.py b/capital/capital_allocator.py
+new file mode 100644
+index 0000000..271ec35
+--- /dev/null
++++ b/capital/capital_allocator.py
+@@ -0,0 +1 @@
++class CapitalAllocator: pass
+diff --git a/capital/capital_flight_detector.py b/capital/capital_flight_detector.py
+new file mode 100644
+index 0000000..ade7172
+--- /dev/null
++++ b/capital/capital_flight_detector.py
+@@ -0,0 +1 @@
++class CapitalFlightDetector: pass
+diff --git a/config.py b/config.py
+new file mode 100644
+index 0000000..437e4a8
+--- /dev/null
++++ b/config.py
+@@ -0,0 +1,54 @@
++MODE = 'PAPER'
++MAX_DRAWDOWN = 0.15
++"""
++Global configuration for the Financial Organism
++Central source of truth for modes, limits, and system behavior
++"""
++
++CONFIG = {
++    # -------------------------
++    # SYSTEM MODE
++    # -------------------------
++    # PAPER  : no real orders
++    # SHADOW : live data, fake execution
++    # LIVE   : real capital (locked)
++    "MODE": "PAPER",
++
++    # -------------------------
++    # LOOP CONTROL
++    # -------------------------
++    "LOOP_INTERVAL": 5,  # seconds between cycles
++
++    # -------------------------
++    # CAPITAL SETTINGS
++    # -------------------------
++    "STARTING_CAPITAL": 10_000.0,
++    "MAX_TOTAL_EXPOSURE": 0.30,     # 30% of capital
++    "MAX_SINGLE_STRATEGY": 0.10,    # 10% per strategy
++    "MAX_LEVERAGE": 2.0,
++
++    # -------------------------
++    # RISK LIMITS
++    # -------------------------
++    "MAX_DAILY_DRAWDOWN": 0.03,     # 3%
++    "MAX_PORTFOLIO_DRAWDOWN": 0.10, # 10%
++    "TAIL_RISK_LIMIT": 0.01,
++
++    # -------------------------
++    # CRISIS / BLACK SWAN
++    # -------------------------
++    "CRISIS_SENSITIVITY": 0.7,
++    "AUTO_HEDGE_ENABLED": True,
++
++    # -------------------------
++    # EVOLUTION ENGINE
++    # -------------------------
++    "EVOLUTION_ENABLED": True,
++    "GENETIC_MUTATION_RATE": 0.05,
++    "GENETIC_CULL_THRESHOLD": -0.02,
++
++    # -------------------------
++    # LOGGING
++    # -------------------------
++    "LOG_LEVEL": "INFO"
++}
+diff --git a/data/fetch_data.py b/data/fetch_data.py
+new file mode 100644
+index 0000000..4c4010e
+--- /dev/null
++++ b/data/fetch_data.py
+@@ -0,0 +1 @@
++def fetch_data(): pass
+diff --git a/data/preprocess.py b/data/preprocess.py
+new file mode 100644
+index 0000000..67ce732
+--- /dev/null
++++ b/data/preprocess.py
+@@ -0,0 +1 @@
++def preprocess(df): return df
+diff --git a/evolution/genetic_engine.py b/evolution/genetic_engine.py
+new file mode 100644
+index 0000000..fbe802a
+--- /dev/null
++++ b/evolution/genetic_engine.py
+@@ -0,0 +1 @@
++class GeneticEngine: pass
+diff --git a/evolution/strategy_genome.py b/evolution/strategy_genome.py
+new file mode 100644
+index 0000000..4c9b2f4
+--- /dev/null
++++ b/evolution/strategy_genome.py
+@@ -0,0 +1 @@
++class StrategyGenome: pass
+diff --git a/execution/execution_engine.py b/execution/execution_engine.py
+new file mode 100644
+index 0000000..7ab5b03
+--- /dev/null
++++ b/execution/execution_engine.py
+@@ -0,0 +1 @@
++class ExecutionEngine: pass
+diff --git a/execution/shadow_book.py b/execution/shadow_book.py
+new file mode 100644
+index 0000000..dc7634d
+--- /dev/null
++++ b/execution/shadow_book.py
+@@ -0,0 +1 @@
++class ShadowBook: pass
+diff --git a/execution/trade_throttle.py b/execution/trade_throttle.py
+new file mode 100644
+index 0000000..78f572e
+--- /dev/null
++++ b/execution/trade_throttle.py
+@@ -0,0 +1 @@
++class TradeThrottle: pass
+diff --git a/generate_financial_organism.zip b/generate_financial_organism.zip
+new file mode 100644
+index 0000000000000000000000000000000000000000..896048ef0b5700fd346f151b8fc786684e6e47e2
+GIT binary patch
+literal 11996
+zcmbta2{@GN`yR5T5TYze+R)6XBt>N@GR97%Xc}WMnT45&{G^UbMJXvti58(mi>0VU
+z8>1OZC@oqnsZ?m8?HvF2!|3}aGfn?G*D%*P*SVkjz2E0~-uHd(T=1i$#-pG=^L!k9
+z2EGjakVomF$YBiXdNzeYH(I}83`#-@`cDHtR(L3&Wc?H3DXWv>DbR110USA$+%Gs<
+z2%JDNoy?|?2xNL7g-*tXL<j>u4nQGbd^HY@^$c<5;V~SCFdn{!i!XH3N5%CpB~UJS
+zSvgB%{3dNcOACC2lh8(xV6mA*HaReY0N5~S;<J#$8rY+8j_26Uyt_4y5DobcLp0RQ
+z6PS|#1&GQZ4e;d`Ee15*KqmdIrjwxM4C4%c`@O0skgDd|Ibty!ZVl_FuKWd^39y`~
+z1C{_SO1Q2Q5ky!)M1Mv&!H>ZR7O}HP4sz9Y4jiNKs+yW2NYCyeJzpEh>uG?{6Ges}
+z$gN==z^?j}3G5&ygUzOj+EoDt2KEj(1&)4|kpTyX$gN{&V;^L00XDyE>KLFwAR~;-
+zq!Z~R@?TWSWF!!gLSRx@!2}Y6Mx(IVWKk<RiQLyuW2?~BVbwJ}9@+pmkf?F|eN{F#
+zd-3~y6`&HxAW$h`WCAIOObVt_SZop7%csKX4O!pY+cQ?t_56yRd)nJ22g)_cNxe}8
+zh&XO|Uq_Nu1}H%zl9-IYP*Z&vgG5}<B2xdfIJzAjuvOtsXp9p#^k;c|9LmrAkzKL6
+zfcj*S>wr>&#-LN!3?_vh_!o<rfCM7aiPQ+tMp<I)10Lt-u5XX2G%~EKEpXGfLt|eK
+z?M0Rz<*hp45A}cHB`y%!pU4XGV-T7C;)cfJ(1x+jICQmLl{4C2kc01vlyi`VqT3AA
+z?_fHz$y9P6lSm^FsbnTwToLTJIE-OkCC2FikU_tSyY+lT@jy<h?xWX0y+(BJmIfT4
+zdi;xB)Zjz-QHi8r0xO(ICj^oG1IbJgVj`PWNEObZS`q8a{b=WibH-eRjzWHEn{uep
+zzb|d5We==_#Gr?fH&ECSe_9zK)ity5xs~YC?4NbP=OE{$TlRYnP~RTl;7?{!!ia3p
+zTUdk;CWQp5<PW8As;;cTVFu0){*^#(A;%564rq$ZYgImnU<#EA_JYDD1&JNIyPC@x
+zjjciBs?WEyyP>umXqXrC<qP*JH}T7c_?Cv$d5*KB$DKNO$S2V|d7YM<$Kf~^Z?^*}
+zX=$sZJhR=mWj0{uWKGOgA4tFUO|hGt09A@ey5sqD2hIc<=m39`Hge!R=yl}c9fned
+zf6NA)x{QWog3@1j3m8rr7Ml@5Ww2O;KaP*(7<F@uuy79il$q;)eiSlg0GSa_Sr&!1
+zo(i(%ukNEdKu8!63Ft{-5r+N^LsTX5Pqv{eDHdpoR;=b?csMl22vLbyiR*WYxun6X
+zD22@Wi@u@;E$JsvNC*RzbeM=_My^Cot~;DJD<8BH=7zzJ=>9E*3!Mt0PX<k7*wFPv
+zI-5Xa_>-yPw&Y5lGma;CBy6oGW~hPSs^B9$C!rPsTl4Uh-jB!<|Dwdd(1Qa3#T+^f
+z)>HC1(5VQ0golStMOb(sK7~#I!iyt1bRZkpbGh{b=W&Hgh%9p9fCB2CFY;Xm-HpKe
+zfjV-+(DsY-CWCt4AO@LEVn&2OB_$?vJ02c;2CZM04UxCU7+|X0v!4%LC{BEy`WZSz
+zMK@lkn+ygAwG84%h|x`k6BcM!i9_Rf_`HUn1ZMLI^m!<@L7gAj&TQ5o6;%33fDtIX
+zi!MD7PuT`O&?|JkTY22$+2gKh{ZQJvt6b*swPefxdABsXgu9oxG`YK+yx^sax79pI
+ze_i2qk!(KNV<zP#?}#a5{Bm64t-4W$a~<L=Dy`n+sh-)oZ`=4!in;SG8FGa#4!%<R
+zL*`C$ztJ1Y_DGgmnBnP=e3Ym?=5i3Z@YcPH_pf!E9>3U<wM<tbHzDZ7RPDn?x*Er0
+z10_PIeY4V9RdSB;o!**lQqotD`%3rLWT%?XJ#`cAC|9VPW#pf;*>7;aRS}({T~#xN
+z*yzCV)s8lIci#MU&pb_XwDh++DcRb8LT(nv_MGuA-Tq@!dl>IXZg}bQC1s{tucsE4
+zRanLCIx^wup%#_+qsk`~{2Nu2B>$bWzX)~tO;qw8kCNVe+0w}5d07=K)|b$rM9IWf
+zR+RmRb=opB4U}SzS02~c$Jx^BM?&9^*ci3RoJMZmt&`-~WTM3;r1V(Jc=yk%FuruX
+zO69@Sc2nv8R@U|0@Ne{qozs(PFAEmG+dq%gYkk9;{=z83xUpc%hkET4osWgfgS|V}
+z;4ajKT-u-VrqJR0-1dYe@9v$u@`-HK?EEH%vBk6aYrOaFkGKDE31f7u{ZwYwKegAz
+zm=el)M*DX%G%HZCsR_6tfkGW0#V>8B!0-a;p)#Bv1VTszi3lD&1j2~j*$HF^Gys8$
+z?q{pW7bw`#01w=?0w}_+Hgm!M?l6>SNgl4jAkj7{wOMFmPibWwt#^}&S)3i)veVG>
+z{DF)pmAsSFGGl$IS*s_0?=t7$D(B1WAxM>cFa7?${^;@(&M&ll;yH(Gz24p5xu|o~
+zvVf>LV|t!mfBp2*>a>o+)#YZJ;~ylnJ=F81@49UNajbfTL}OK%F0TcRn}dxbr=Duh
+zY<`n+*04L1d&$O6mteVqnv-;s`k~ms{JfJXB_=SHcl=3G(!;VG@7t3pYu@JQ#mmW}
+zEio34F=btndHsEpRN8iVu%)KH&7E^c1J#Z4R*bQF7%|7xCL%*yr9kRt=ck)xi}G3&
+z(JiK<UhcpZ-QTrzMxeWVa^;0-J&~(ke5D+n$q4wbxcbA{d0i5Vyc#>3mT0|cv)(PS
+z*md7?1*^2%LF$H@j-x9s_D$Mls8HH|by-DD*B$?aw~2)YH3|2ok}~CFaY=qe-6K`|
+z;+Cl&>yygP?hJm`$M{iQK3RL|^x2uOKd!9A`8R)Hy#JxtVDkP4-rO}Z(%D5Nc44EN
+z&9b`Zx64aR-b&u}xpBqd*sb!jTxR%|R<`|Al_s-GPRmJJdNb0y8<#tngq6`Wh(Fpd
+z2RmhL4ySf~n8rfunT$(~waBM=<(-N;V{J{l9W*mD;B8txPN~k}#)J)R8GTYr+Z&ma
+z8eK3H{S-g<%yk{tb#x9m9H?FTNGUsWN<>@1-q00P-okIMJi253^rSRp(A1JAPnG)^
+zv<XT<c50ok>y{}W3<%8X?fS1P_31WN?sny*rRA79lYr*5OXU)AN{5XY&$rj-#a7&i
+zF1y}xF09iON_(_I@m3c}6slO7pZ3t4PE{aHWkH(Kz$qr=9FR>MOw#jv;wgn*Jo;nX
+zait#()VVS1XnK?*^G(Vm<1psS{5c5?Qm<oHx=*D9Grb=AK5{*RlKzIWiB5a8bj+vP
+zCD!RPjlj>qVtlMcQR}g6MHLfsWAn|=xV3#zU57%e+-;5LCgZD8syL6kHtA&@2%Y<U
+z6}>WLtxsgV^_q)#|L<E;afk9fjLYv@_>~uQ9F1F;J&KW@`ng6%)w)vR#TGlu(Nj8f
+z8+E+Ld)rQPpU}2c@}S-<d$sW<zLN4z>7VxAsfk~^U21OD;rGh7Kj@v*d?~fYYL&fi
+z=j=`Mb=xPkOB?ta$6t@$c2Ii%F}sp2pY%xfswHdi(P4dyCSUu!vQ*tomB-9ZYqX7c
+zY8{uFvBjt<alyA28`#?EO{!NHxD#h2;}aUcs<8bGoSv-I##(0O+*;(hF*(saB3klg
+z8FLn<?%ecIYNcrX2e>`TT#xA{g%w96yb{s_pQ8)Xw!b$$?mffp%<cQxOCxK~y?U?<
+zGq=d+_?%-?-pNlsn6><U?ZUth>W7U!ZL423afY3FVTNW$gl+w<WxlRyXV<PFZKf(_
+z+HH1AJQ{W|fJ;AgVv&37$%fstUf0J_+l$EKvC&%tD3TjF3p}i6CY$NUzR#mgiFurr
+z+;HrKd9fSS0Bfar*3!<~%~nq>qPk#v?pllabqmf`rgbz={eCH`dy&rV{L2=*ufM5j
+z>3MZjGHuq4Y|qWnn;-36zDdb-!4l2q`!K${WA99z_BHaBQRwSFx#AApZza}GI#ry5
+z-fFAMC}@6YOJ(kfi<C_(Pq{Y3f8!KMiw_*xwz_}U^tGiE`oF|$SDgIs)wsoatsLCu
+z@y^bi)}9UOd!2sdRi2o)w_%BF+v=tNV=3fso*!GWe?zZdMP#H`iBrY>Z&%vxY)cwj
+z(V8Egb^8{!B9mh6`Sg)|#`NTMmB$nQA*?jkzU;X@z()J!1#Qf$IZ5x9j9Zx=R<_sd
+zP&nH0eAk!5-FfI>OY<`)ADw<YMRV_J{k#M0^IC<(&I5(DnkLb!PUn9?Hx}q>9174#
+zu?~H))?~IVO?&=Hi&IVeOxvVxmc%bwJ#Ng=onK_emgashdXr!%?KTs??~q2)^G_)Z
+z!*}s>k0d{wx!X8CKPhVKC<ir)ynTwn<<b9^;4U>JwHtK!dhZBNDqb}Qot}bT+c8@4
+zWAo&kSLM$(|J&XB{Tb&%itB<;yxn@s18f_=uFD^@^>Iqz3RKuS3+B3+(&5sUe*c-Q
+zWXr6(`MJtptM4DR>Yyp!>txuz6-9~3sVy$M%}%LF-Y6~8mNCJbZQuBI>}i)}dvt9U
+zZ^@BqRo`%;w$u8^ce9n~nY)j#u$5L&%Uxho*l|sfRDUJ=>!tGMo>!_J`$iduW}8O3
+z9^FUh+)1Hbl519#q8&7!u$b!W|5)Zi)XAtxEm;rg)>l@~OJvo?Zr#dNOG@oIrJ-xl
+zUwp0hGbTr_hjicVZI4ad*(S~V)@mw0)+~SRm`B=i$49g2@Jr=}CbQDbs~XRFd&(Bo
+zR^5xzRNC>qzN6=D_h^k?!q^$S&bu=VvE7gUXWpFjhE`--*g?PjqyJQlL7TM~_Q|1H
+z9@z>$ju$t5t+Ul9HR-4=tO(n=>k_X)()CPvMpEjS&``&;Gw*fGJoC9SzVm&mOj@N2
+zSf5hvx-N{{nPQW%_f0Qv*^Sj&Puk@VH}#EksHPuyXX$(K#{`FG3005lepD_bRve);
+zjVGMcba*`b;SSpu?@bnU2K8UPR~q&3#&n!UQ^MK@%BQdTy}Wi#<J-$^io6q15snh)
+ztgzd-yj9xkR|mYC$FU-%ds%heIqZw#*32>PaxHkd80(=?W|rM`HNay=Ptg2Bi#nA;
+zzeY9XaLRMW-#@%4hF5%ysl!rmQx9%Ne+>)1LC!AA%<zm!+cnFHn=|A2?(`kG_ez&~
+zx31gy(BJIxGm~JK{|*@4i7P9dZ*_Z1=f{H^ZN4rt?u=<(P&;8tXzX^=E`}H8u+sa>
+zQ<QA;IlICc6-_>g+v>FwGoD;Xy!EyU*V2o=vLLcw5;`f?*O!lN1gAs-7|;H^&<Hw1
+z(1pg$#%h_P4VLCF%)eQ`Z}8^q?iq5Ii|6929k{ODM)uC!yXfln_Lg>eL!Nsj*Ih1T
+zY>0vz^bTB6S#$SvL+j8}Vvpt)yfL_(%>f_bOdvnSZH1Gyvol@<75?MF-Lu=s4r7l7
+zhQ};VIYS;Em<}%i6(-LSV-F0byaG2lgDMASXN(&(-*J^281V4l77nP^95cXX!7wB6
+z<(JFjSinf!Yok6mQU})tAqlE12arg_5DJ?}9r5xhp8EzFUwo9I-(YG=WsrzqCN1Qs
+zhmZyAHz#x@8pjRgayZUTL&FYv{wQ4YD)|{S!i5GN!naCq1R?=cN?;J1;7?|gN&g=@
+zcR3C<`k^=s&Jm24paD!3e+2mKy!MxAfX~!nPT&j5Uf`w=jdcBqY~qOeLO1f?yPMEs
+zVE`h44CaRf=&J}-`L}#%CU1ww;Hr0m!8mT<B@3I&C!sS8peM9w?`t@62$LMbWRS=#
+zQB#-U{e*@O;N7lY<?MvP-nYZm4?pAWaQxz1t6OL}1rR`*8-nj7W&YB|&39<^E_eya
+z@uP$}&d`bn|MXiyzeV`Z(kKZiPx*L!=NWDXYYiwkh*uPChrs*24=p4B-00Ot1mGb8
+z3=gD)d&~k6AfkdzKpqyM-^xP*NHT19{?d5`@c5Fzo!m(<yrSq-1l};R2tPnb2)J82
+z5fNfKcy|l~8~w&07J?49VUc^9fk6Mg|0@t+B*n+T==WP0fJuQUZ&v`2FFD*~oeTpk
+zie@4K#qxNC1c6(r$RPhBgNWtc3IrKR8X4G1`mHvCzX&44qZPp7s{;2-)nQmg(PhI}
+zzx8Sbut(yF+`?txJ_GX(#jP5+IXVGBHXaEm(u);f%U1&KdLqH)WDsmcx~)RM;dUmn
+z-ghIx#jsHYLX4!gG)$a+t8ua@Aug!^6kiIsX{iB&DvEaJLy6^<3W10Fk;u-}#D^Eh
+z2Ni}6a~hGI$wzKT2QeK^ApzjtpejP0=llS_u`h)H!;Qc32;jY=hnWA)XcU4BxATyS
+zkC7ij7RN>uKp!ddkafNnpu>DUvFjXW)#)IFXhH&tV-)@|X}>Xm^iStbT+(oVP7Ogi
+z2MH*`3KZbVuSdB1rip;o8;jujJG)N^KHOeImP|SlfA|6=%+V7P0Pdn8d#jEDVgVvO
+zI{|Pg{eCs#;Mdhd09=SI2e1Ymg2AgVUun2ohOF%;!&sv2IRTP<V7Lp0tUzx?K1ngG
+zw-L}GCk<|*C?OK$(NA=tz8V09d^P^H9nw|sU7-R4?YH_0MiGO$ihO1OT*!^#<3dtE
+zJ`8;HJsO5v6pd3xiEw2A9OTNt;h=drd_E$Jfa?ZswXo?q0E4FIa4_he4<B(LxoLve
+zpYQ<-fE(%M1D{X8pAALP84#TCDTx5yNLw-%w$^^D`M_fRlg)q-1s^tY2*iH?B7aID
+zZV!Zy9gq*PJ1{h{W*!0x@aqUZM9_orEsAyqE;pYqKY|#;41qY1F29Z>;7z3!#2I-&
+z0ifW|X+CB6=m1_vMbR_B->?&7P$58(j|-m&AaRfJaYc_I1aP6H3)a0dOyYj4DPWv5
+Zz*oFXlLl8?6v_zv;|Ur@2sDdA{T~US8HfM?
+
+literal 0
+HcmV?d00001
+
+diff --git a/governance/ai_risk_committee.py b/governance/ai_risk_committee.py
+new file mode 100644
+index 0000000..a0d41bb
+--- /dev/null
++++ b/governance/ai_risk_committee.py
+@@ -0,0 +1 @@
++class AIRiskCommittee: pass
+diff --git a/governance/go_live_checklist.py b/governance/go_live_checklist.py
+new file mode 100644
+index 0000000..87c10a0
+--- /dev/null
++++ b/governance/go_live_checklist.py
+@@ -0,0 +1 @@
++CHECKLIST = []
+diff --git a/macro/causal_engine.py b/macro/causal_engine.py
+new file mode 100644
+index 0000000..0eeb0b3
+--- /dev/null
++++ b/macro/causal_engine.py
+@@ -0,0 +1 @@
++class MacroCausalEngine: pass
+diff --git a/main.py b/main.py
+new file mode 100644
+index 0000000..38f4132
+--- /dev/null
++++ b/main.py
+@@ -0,0 +1,147 @@
++"""
++Financial Organism — Main Entry Point
++Survival > Prediction > Profit
++
++Modes:
++- PAPER   : no real orders, full risk + evolution active
++- SHADOW  : live data, simulated execution
++- LIVE    : real capital (requires checklist approval)
++"""
++
++import time
++import sys
++
++from config import CONFIG
++from utils.logger import get_logger
++
++from data.fetch_data import fetch_market_data
++from strategies.quant_models import StrategyEnsemble
++from capital.capital_allocator import CapitalAllocator
++from capital.capital_flight_detector import CapitalFlightDetector
++
++from risk.risk_manager import RiskManager
++from risk.black_swan_hedger import BlackSwanHedger
++
++from simulation.crisis_simulator import CrisisSimulator
++from evolution.genetic_engine import GeneticEngine
++
++from execution.execution_engine import ExecutionEngine
++from governance.ai_risk_committee import AIRiskCommittee
++
++
++# -----------------------------
++# INITIALIZATION
++# -----------------------------
++
++logger = get_logger("MAIN")
++
++MODE = CONFIG.get("MODE", "PAPER")  # PAPER | SHADOW | LIVE
++
++
++def system_banner():
++    logger.info("=" * 80)
++    logger.info("🧠 FINANCIAL ORGANISM BOOTING")
++    logger.info(f"MODE            : {MODE}")
++    logger.info("PRIORITY        : Survival > Prediction > Profit")
++    logger.info("=" * 80)
++
++
++# -----------------------------
++# MAIN LOOP
++# -----------------------------
++
++def main():
++
++    system_banner()
++
++    # --- Core Components ---
++    strategy_ensemble = StrategyEnsemble()
++    allocator = CapitalAllocator()
++    capital_flight = CapitalFlightDetector()
++
++    risk_manager = RiskManager()
++    black_swan = BlackSwanHedger()
++
++    crisis_simulator = CrisisSimulator()
++    genetic_engine = GeneticEngine()
++
++    executor = ExecutionEngine(mode=MODE)
++    ai_committee = AIRiskCommittee()
++
++    # --- Safety Gate ---
++    if MODE == "LIVE":
++        ai_committee.assert_go_live_ready()
++
++    logger.info("System initialized successfully.")
++
++    # -----------------------------
++    # LIVE LOOP
++    # -----------------------------
++    while True:
++        try:
++            # 1️⃣ Fetch Market Data
++            market_data = fetch_market_data()
++
++            # 2️⃣ Run Crisis Injection (synthetic + historical)
++            crisis_signals = crisis_simulator.evaluate(market_data)
++
++            # 3️⃣ Strategy Decisions
++            strategy_outputs = strategy_ensemble.generate_signals(
++                market_data=market_data,
++                crisis_signals=crisis_signals
++            )
++
++            # 4️⃣ Capital Allocation
++            allocations = allocator.allocate(strategy_outputs)
++
++            # 5️⃣ Capital Flight Detection
++            if capital_flight.detect(market_data):
++                logger.warning("🚨 Capital flight detected — reducing exposure")
++                allocations = allocator.defensive_mode(allocations)
++
++            # 6️⃣ Risk Evaluation (KILL-SWITCH LAYER)
++            risk_ok = risk_manager.evaluate(
++                allocations=allocations,
++                market_data=market_data,
++                crisis_signals=crisis_signals
++            )
++
++            if not risk_ok:
++                logger.critical("🛑 Risk limits breached — flattening book")
++                executor.flatten_all()
++                continue
++
++            # 7️⃣ Black Swan Auto-Hedging
++            hedge_orders = black_swan.generate_hedges(
++                market_data=market_data,
++                allocations=allocations
++            )
++
++            # 8️⃣ Execute Trades
++            executor.execute(allocations, hedge_orders)
++
++            # 9️⃣ Evolution Pressure (Strategy Darwinism)
++            genetic_engine.evolve(
++                performance=strategy_ensemble.performance_metrics(),
++                crisis_feedback=crisis_signals
++            )
++
++            time.sleep(CONFIG.get("LOOP_INTERVAL", 5))
++
++        except KeyboardInterrupt:
++            logger.warning("Manual shutdown requested.")
++            executor.flatten_all()
++            sys.exit(0)
++
++        except Exception as e:
++            logger.exception(f"Unhandled system error: {e}")
++            executor.flatten_all()
++            time.sleep(10)
++
++
++# -----------------------------
++# ENTRY
++# -----------------------------
++
++if __name__ == "__main__":
++    main()
+diff --git a/monitoring/analytics.py b/monitoring/analytics.py
+new file mode 100644
+index 0000000..2d690c6
+--- /dev/null
++++ b/monitoring/analytics.py
+@@ -0,0 +1 @@
++def report(): pass
+diff --git a/monitoring/dashboard.py b/monitoring/dashboard.py
+new file mode 100644
+index 0000000..7015294
+--- /dev/null
++++ b/monitoring/dashboard.py
+@@ -0,0 +1 @@
++def start_dashboard(): pass
+diff --git a/monitoring/telegram_alerts.py b/monitoring/telegram_alerts.py
+new file mode 100644
+index 0000000..a75e634
+--- /dev/null
++++ b/monitoring/telegram_alerts.py
+@@ -0,0 +1 @@
++def alert(msg): print(msg)
+diff --git a/risk/black_swan_hedger.py b/risk/black_swan_hedger.py
+new file mode 100644
+index 0000000..e569bf9
+--- /dev/null
++++ b/risk/black_swan_hedger.py
+@@ -0,0 +1 @@
++class BlackSwanHedger: pass
+diff --git a/risk/convexity_engine.py b/risk/convexity_engine.py
+new file mode 100644
+index 0000000..c7afeaf
+--- /dev/null
++++ b/risk/convexity_engine.py
+@@ -0,0 +1 @@
++class ConvexityEngine: pass
+diff --git a/risk/derivatives_pricing.py b/risk/derivatives_pricing.py
+new file mode 100644
+index 0000000..98a42ac
+--- /dev/null
++++ b/risk/derivatives_pricing.py
+@@ -0,0 +1 @@
++class BlackScholes: pass
+diff --git a/risk/kill_switch.py b/risk/kill_switch.py
+new file mode 100644
+index 0000000..8011af1
+--- /dev/null
++++ b/risk/kill_switch.py
+@@ -0,0 +1,3 @@
++class KillSwitch:
++    def __init__(self): self.active=True
++    def trigger(self,r): self.active=False
+diff --git a/risk/risk_manager.py b/risk/risk_manager.py
+new file mode 100644
+index 0000000..ad266cb
+--- /dev/null
++++ b/risk/risk_manager.py
+@@ -0,0 +1 @@
++class RiskManager: pass
+diff --git a/risk/stoploss_manager.py b/risk/stoploss_manager.py
+new file mode 100644
+index 0000000..515d9b5
+--- /dev/null
++++ b/risk/stoploss_manager.py
+@@ -0,0 +1 @@
++class StopLossManager: pass
+diff --git a/simulation/crisis_simulator.py b/simulation/crisis_simulator.py
+new file mode 100644
+index 0000000..fab6b6c
+--- /dev/null
++++ b/simulation/crisis_simulator.py
+@@ -0,0 +1 @@
++class CrisisSimulator: pass
+diff --git a/strategies/ppo_env.py b/strategies/ppo_env.py
+new file mode 100644
+index 0000000..a3f6449
+--- /dev/null
++++ b/strategies/ppo_env.py
+@@ -0,0 +1 @@
++class PPOEnv: pass
+diff --git a/strategies/quant_models.py b/strategies/quant_models.py
+new file mode 100644
+index 0000000..4e94d65
+--- /dev/null
++++ b/strategies/quant_models.py
+@@ -0,0 +1 @@
++def model(): pass
+diff --git a/strategies/strategy_base.py b/strategies/strategy_base.py
+new file mode 100644
+index 0000000..395754b
+--- /dev/null
++++ b/strategies/strategy_base.py
+@@ -0,0 +1 @@
++class Strategy: pass
+diff --git a/strategies/train_ppo.py b/strategies/train_ppo.py
+new file mode 100644
+index 0000000..49f5b0a
+--- /dev/null
++++ b/strategies/train_ppo.py
+@@ -0,0 +1 @@
++def train(): pass
+diff --git a/utils/encryption.py b/utils/encryption.py
+new file mode 100644
+index 0000000..b5469e4
+--- /dev/null
++++ b/utils/encryption.py
+@@ -0,0 +1 @@
++def encrypt(x): return x
+diff --git a/utils/latency_manager.py b/utils/latency_manager.py
+new file mode 100644
+index 0000000..765eec3
+--- /dev/null
++++ b/utils/latency_manager.py
+@@ -0,0 +1 @@
++def latency(): return 0
+diff --git a/utils/logger.py b/utils/logger.py
+new file mode 100644
+index 0000000..86ba0b9
+--- /dev/null
++++ b/utils/logger.py
+@@ -0,0 +1,41 @@
++
++"""
++Centralized logging utility for the Financial Organism
++Institutional-grade, console-safe, extensible to files / ELK later
++"""
++
++import logging
++import sys
++from config import CONFIG
++
++
++def get_logger(name: str) -> logging.Logger:
++    """
++    Returns a configured logger instance
++    """
++
++    logger = logging.getLogger(name)
++
++    # Prevent duplicate handlers
++    if logger.handlers:
++        return logger
++
++    log_level = CONFIG.get("LOG_LEVEL", "INFO").upper()
++    level = getattr(logging, log_level, logging.INFO)
++
++    logger.setLevel(level)
++
++    handler = logging.StreamHandler(sys.stdout)
++    handler.setLevel(level)
++
++    formatter = logging.Formatter(
++        fmt="%(asctime)s | %(levelname)-8s | %(name)s | %(message)s",
++        datefmt="%Y-%m-%d %H:%M:%S",
++    )
++
++    handler.setFormatter(formatter)
++    logger.addHandler(handler)
++
++    logger.propagate = False
++
++    return logger
+-- 
+2.50.1.windows.1
+
