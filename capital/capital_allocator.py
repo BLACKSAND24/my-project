@@ -1,4 +1,4 @@
-﻿from config import CONFIG
+﻿from financial_organism.config import CONFIG
 
 class CapitalAllocator:
     def __init__(self, total_capital=None):

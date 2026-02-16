@@ -1,4 +1,4 @@
-﻿from config import CONFIG
+﻿from financial_organism.config import CONFIG
 CHECKLIST = [
     {"id":"mode_is_live","description":"System is explicitly configured for LIVE mode","validator":lambda c: c.get("mode")=="LIVE"},
     {"id":"exchange_credentials_present","description":"Broker credentials are present","validator":lambda c: bool(c.get("exchange_api_key")) and bool(c.get("exchange_api_secret"))},

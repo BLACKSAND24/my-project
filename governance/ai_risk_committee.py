@@ -1,4 +1,4 @@
-﻿from governance.go_live_checklist import build_context, evaluate_checklist
+﻿from financial_organism.governance.go_live_checklist import build_context, evaluate_checklist
 class AIRiskCommittee:
     def assert_go_live_ready(self):
         results = evaluate_checklist(build_context())

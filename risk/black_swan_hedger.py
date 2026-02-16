@@ -1,5 +1,5 @@
 ﻿import statistics
-from config import CONFIG
+from financial_organism.config import CONFIG
 
 class BlackSwanHedger:
     def __init__(self):

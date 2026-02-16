@@ -1,5 +1,5 @@
-﻿from config import CONFIG
-from risk.kill_switch import KillSwitch
+﻿from financial_organism.config import CONFIG
+from financial_organism.risk.kill_switch import KillSwitch
 
 class RiskManager:
     def __init__(self):

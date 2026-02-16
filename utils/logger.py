@@ -1,6 +1,6 @@
 ﻿import logging
 import sys
-from config import CONFIG
+from financial_organism.config import CONFIG
 
 def get_logger(name: str) -> logging.Logger:
     logger = logging.getLogger(name)

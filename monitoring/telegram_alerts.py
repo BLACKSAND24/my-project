@@ -1,5 +1,5 @@
 ﻿import os, urllib.parse, urllib.request
-from utils.logger import get_logger
+from financial_organism.utils.logger import get_logger
 logger = get_logger("TELEGRAM")
 
 def alert(msg):

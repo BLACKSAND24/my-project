@@ -1,6 +1,6 @@
 ﻿import math
 import statistics
-from config import CONFIG
+from financial_organism.config import CONFIG
 
 class CrisisSimulator:
     def __init__(self, vol_threshold=None, drawdown_threshold=None):
