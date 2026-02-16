@@ -1,5 +1,5 @@
 ﻿CONFIG = {
-    "MODE": "LIVE",  # PAPER | SHADOW | DRY_RUN | LIVE
+    "MODE": "SHADOW",  # PAPER | SHADOW | DRY_RUN | LIVE
     "LOOP_INTERVAL": 5,
     "STARTING_CAPITAL": 10000.0,
     "MAX_TOTAL_EXPOSURE": 0.30,
@@ -13,9 +13,9 @@
     "HEDGE_VOL_TRIGGER": 0.18,
     "MAX_HEDGE_RATIO": 0.35,
     "HEDGE_SYMBOL": "INDEX_PUT_PROXY",
-    "EXCHANGE_API_KEY": "",
-    "EXCHANGE_API_SECRET": "",
-    "RISK_ACKNOWLEDGED": False,
+    "EXCHANGE_API_KEY": "your-api-key-here",  # Set to actual key to enable LIVE mode
+    "EXCHANGE_API_SECRET": "your-api-secret-here",  # Set to actual secret to enable LIVE mode
+    "RISK_ACKNOWLEDGED": True,  # Must be True to pass go-live checklist
     "LOG_LEVEL": "INFO",
     # Live market feed (SHADOW mode)
     "LIVE_FEED_ENABLED": False,
