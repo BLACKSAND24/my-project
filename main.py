@@ -21,6 +21,7 @@ from financial_organism.utils.logger import get_logger
 
 from financial_organism.data.fetch_data import fetch_market_data
 from financial_organism.data.live_feed import LiveMarketFeed
+from financial_organism.data.macro_data import simple_rss_sentiment, fetch_fred_series
 from financial_organism.strategies.quant_models import StrategyEnsemble
 from financial_organism.capital.capital_allocator import CapitalAllocator
 from financial_organism.capital.capital_flight_detector import CapitalFlightDetector
@@ -35,6 +36,8 @@ from financial_organism.execution.execution_engine import ExecutionEngine
 from financial_organism.governance.ai_risk_committee import AIRiskCommittee
 from financial_organism.governance.paper_to_live_readiness import ReadinessGate
 from financial_organism.monitoring.ee_monitor import EE_MONITOR
+from financial_organism.monitoring.telegram_alerts import poll_commands
+from financial_organism.macro.regime_detector import RegimeDetector
 from financial_organism.monitoring.analytics import report as ee_report
 
 import json
@@ -149,6 +152,10 @@ def main(cycles: int = None, interval: float = None, reset_burn: bool = False):
     risk_manager = RiskManager()
     black_swan = BlackSwanHedger()
 
+    # portfolio-level AI uses the same global brain for correlations
+    from financial_organism.ai.portfolio_ai import PortfolioAI
+    portfolio_ai = PortfolioAI(risk_manager.global_brain)
+
     crisis_simulator = CrisisSimulator()
     genetic_engine = GeneticEngine()
 
@@ -184,6 +191,22 @@ def main(cycles: int = None, interval: float = None, reset_burn: bool = False):
     while True:
         try:
             # 1️⃣ Fetch Market Data (MODE-aware data source)
+            # attach lightweight macro signals (free!)
+            rss = CONFIG.get("NEWS_RSS_URL", "")
+            if rss:
+                try:
+                    market_data["macro_sentiment"] = simple_rss_sentiment(rss)
+                except Exception:
+                    market_data["macro_sentiment"] = 0.0
+            # FRED series may be expensive, call sparingly
+            fred_id = CONFIG.get("FRED_SERIES", None)
+            if fred_id and cycle_counter % 60 == 0:  # once per 60 cycles
+                market_data["fred"] = fetch_fred_series(fred_id)
+            # check for any human-AI commands coming over telegram
+            try:
+                poll_commands()
+            except Exception:
+                pass
             if MODE == "PAPER":
                 market_data = fetch_market_data()
             else:  # SHADOW or LIVE
@@ -196,6 +219,10 @@ def main(cycles: int = None, interval: float = None, reset_burn: bool = False):
             # 2️⃣ Run Crisis Injection (synthetic + historical)
             crisis_signals = crisis_simulator.evaluate(market_data)
 
+            # detect market regime (low-vol/high-vol/crisis) for later use
+            regime = RegimeDetector().detect(market_data)
+            logger.debug(f"Market regime detected: {regime}")
+
             # 3️⃣ Strategy Decisions (with execution efficiency awareness - 1️⃣)
             # Build efficiency map: translate exec_efficiency by symbol to strategy names
             exec_eff_by_strategy = {}
@@ -207,18 +234,26 @@ def main(cycles: int = None, interval: float = None, reset_burn: bool = False):
             strategy_outputs = strategy_ensemble.generate_signals(
                 market_data=market_data,
                 crisis_signals=crisis_signals,
-                exec_efficiency_map=exec_eff_by_strategy  # Pass efficiency for penalty logic
+                exec_efficiency_map=exec_eff_by_strategy,  # Pass efficiency for penalty logic
+                regime=regime
             )
 
+            # apply portfolio-level AI to adjust strategy weights
+            try:
+                weights = portfolio_ai.get_weights(strategy_outputs)
+            except Exception:
+                weights = strategy_outputs  # fallback
+
+            # confidence gating: if the leading weight is too small, shrink all
+            confidence = max(weights.values()) if weights else 0.0
+            min_conf = float(CONFIG.get("MIN_PORTFOLIO_CONFIDENCE", 0.20))
+            if confidence < min_conf and confidence > 0:
+                shrink = confidence / min_conf
+                logger.warning(f"📉 low portfolio confidence {confidence:.2%} < {min_conf:.2%}, shrinking exposures by {shrink:.2%}")
+                weights = {k: v * shrink for k, v in weights.items()}
+            
             # 4️⃣ Capital Allocation
-            allocations = allocator.allocate(strategy_outputs)
-
-            # 5️⃣ Capital Flight Detection
-            if capital_flight.detect(market_data):
-                logger.warning("🚨 Capital flight detected — reducing exposure + cooldown strategies")
-                allocations = allocator.defensive_mode(allocations)
-                strategy_ensemble.apply_strategy_cooldown(cycles=3)  # 4️⃣ Cool down all strategies
-
+            allocations = allocator.allocate(weights)
             # 6️⃣ Risk Evaluation (KILL-SWITCH LAYER)
             risk_ok = risk_manager.evaluate(
                 allocations=allocations,
@@ -238,8 +273,7 @@ def main(cycles: int = None, interval: float = None, reset_burn: bool = False):
             )
 
             # 8️⃣ Execute Trades
-            exec_summary = executor.execute(allocations, hedge_orders)
-            
+            exec_summary = executor.execute(allocations, hedge_orders, market_data=market_data)
             # Divergence Analytics: Log PAPER vs SHADOW behavior (optional, for research)
             if MODE == "SHADOW":
                 # Track how live market data diverges from simulated behavior
@@ -248,6 +282,51 @@ def main(cycles: int = None, interval: float = None, reset_burn: bool = False):
                     f"Live vol: {market_data.get('volatility', 0):.3f} | "
                     f"Hedges active: {len(hedge_orders) > 0}"
                 )
+
+            # Record EE metrics and one-line summary for LIVE mode too
+            if MODE == "LIVE":
+                try:
+                    filled_allocs = exec_summary.get('filled_allocations', {})
+                    total_filled = sum(filled_allocs.values())
+                    capital_util = total_filled / max(executor.starting_capital, 1.0)
+                    latency_ms = exec_summary.get('latency_ms', 0.0)
+                    # In LIVE mode, readiness gate already asserted at startup
+                    readiness_flag = True
+                    for symbol, requested in (allocations or {}).items():
+                        filled = filled_allocs.get(symbol, 0.0)
+                        EE_MONITOR.record(symbol, requested, filled, latency_ms, capital_util, readiness_flag)
+
+                    # Ensure we have a readiness snapshot for metrics (compute if needed)
+                    try:
+                        readiness_local = readiness_gate.compute_readiness(executor, risk_manager)
+                    except Exception:
+                        readiness_local = {}
+
+                    # Aggregated metrics (approximate)
+                    rolling_avg_ee = executor.get_avg_execution_efficiency()
+                    exch = CONFIG.get('EXCHANGE', 'DEFAULT').upper()
+                    thresholds = CONFIG.get('EXEC_EFFICIENCY_THRESHOLDS', {}).get(exch) or CONFIG.get('EXEC_EFFICIENCY_THRESHOLDS', {}).get('DEFAULT', {})
+                    window = int(thresholds.get('ROLLING_WINDOW', 10))
+                    ee_min = float(thresholds.get('TO_GO_READY', 0.975))
+                    hysteresis = float(thresholds.get('TO_STAY_READY', 0.970) - ee_min) if thresholds else 0.0
+                    per_strategy = {s: (sum(effs) / len(effs) if effs else 1.0) for s, effs in executor.exec_efficiency.items()}
+                    cap_pct = capital_util * 100.0
+                    metrics = {
+                        'rolling_avg_ee': rolling_avg_ee * 100.0 if rolling_avg_ee <= 1.0 else rolling_avg_ee,
+                        'window': window,
+                        'ee_min': ee_min * 100.0 if ee_min <= 1.0 else ee_min,
+                        'hysteresis': hysteresis * 100.0 if abs(hysteresis) <= 1.0 else hysteresis,
+                        'per_strategy': per_strategy,
+                        'latency_min_ms': float(latency_ms),
+                        'latency_max_ms': float(latency_ms),
+                        'capital_util_min_pct': cap_pct,
+                        'capital_util_max_pct': cap_pct,
+                        'max_dd': readiness_local.get('max_drawdown', 0.0) * 100.0 if isinstance(readiness_local, dict) else 0.0
+                    }
+                    summary = ee_report(metrics)
+                    logger.info(f"[EE_SUMMARY] {summary}")
+                except Exception:
+                    logger.exception("EE monitor failed to record LIVE cycle")
 
             # 9️⃣ Evolution Pressure (Strategy Darwinism)
             genetic_engine.evolve(

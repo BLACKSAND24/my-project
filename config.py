@@ -1,9 +1,24 @@
-﻿CONFIG = {
+﻿import os
+
+CONFIG = {
     "MODE": "LIVE",  # PAPER | SHADOW | DRY_RUN | LIVE
     "LOOP_INTERVAL": 5,
     "STARTING_CAPITAL": 10000.0,
     "MAX_TOTAL_EXPOSURE": 0.30,
     "MAX_PORTFOLIO_DRAWDOWN": 0.10,
+    # new governance / risk parameters
+    "CORRELATION_THRESHOLD": 0.85,
+    "DAILY_MAX_LOSS": 0.05,
+    "WEEKLY_MAX_LOSS": 0.15,
+    "VOLATILITY_ORDER_SIZE_THRESHOLD": 0.20,
+    "TWAP_CHUNKS": 5,
+    # regime detection thresholds (used by RegimeDetector)
+    "LOW_VOL_THRESHOLD": 0.10,
+    "HIGH_VOL_THRESHOLD": 0.30,
+    "REGIME_WINDOW": 20,
+    # macro data helpers
+    "NEWS_RSS_URL": "https://news.google.com/rss/search?q=finance",
+    "FRED_SERIES": "GDP",
     "AUTO_HEDGE_ENABLED": True,
     "AI_CRISIS_THRESHOLD": 0.70,
     "KILL_SWITCH_COOLDOWN": 300,
@@ -13,14 +28,16 @@
     "HEDGE_VOL_TRIGGER": 0.18,
     "MAX_HEDGE_RATIO": 0.35,
     "HEDGE_SYMBOL": "INDEX_PUT_PROXY",
-    "EXCHANGE_API_KEY": "65EO8AAs8XXvIUa9PGHBV39CuoCHPyDW6bhUWejxT5K1kbACrWUP1gU9VcextjUT",  # Set to actual key to enable LIVE mode
-    "EXCHANGE_API_SECRET": "afGFb0HvkWy7NIlXMotDAyg7C0K5pxGUCaNX7tog7p8MNEMUmyjGpsMRQNGovRxf
-
-",  # Set to actual secret to enable LIVE mode
+    # Credentials should be provided via environment variables to avoid committing secrets.
+    # Example (PowerShell):
+    #  $env:EXCHANGE_API_KEY = 'your-key'
+    #  $env:EXCHANGE_API_SECRET = 'your-secret'
+    "EXCHANGE_API_KEY": os.getenv("EXCHANGE_API_KEY", ""),
+    "EXCHANGE_API_SECRET": os.getenv("EXCHANGE_API_SECRET", ""),
     "RISK_ACKNOWLEDGED": True,  # Must be True to pass go-live checklist
     "LOG_LEVEL": "INFO",
     # Live market feed (SHADOW mode)
-    "LIVE_FEED_ENABLED": False,
+    "LIVE_FEED_ENABLED": True,
     "LIVE_FEED_CACHE_SECONDS": 5,
     # DRY-RUN phase (Option 2): Micro-capital validation before LIVE
     "DRY_RUN_ENABLED": False,

@@ -121,59 +121,83 @@ class ExecutionEngine:
         
         return filled
 
-    def execute(self, allocations, hedge_orders):
+    def execute(self, allocations, hedge_orders, market_data=None):
         # CRITICAL SAFETY: SHADOW must NEVER place real trades
         if self.mode == "SHADOW":
             assert self._has_trade_permissions() == False, \
                 f"SHADOW mode MUST NOT have trade permissions! Aborting order."
-        
-        # Simulate execution latency (once per cycle, not per order)
+
+        # simulate execution latency (once per cycle, not per order)
         latency_ms = random.uniform(self.LATENCY_MIN_MS, self.LATENCY_MAX_MS)
         time.sleep(latency_ms / 1000.0)
-        
+
         # Check drawdown and set defensive flag (3️⃣)
         self.check_drawdown_defensive_trigger()
-        
+
         # Guard: prevent over-allocation (capital conservation)
         allocations = self._cap_allocations(allocations)
-        
+
         # Apply capital utilization ceiling (2️⃣)
         allocations = self._apply_capital_ceiling(allocations)
-        
+
         # Apply defensive mode reduction if triggered (3️⃣)
         if self.force_defensive:
             allocations = {k: v * 0.5 for k, v in allocations.items()}
             self.logger.info(f"[{self.mode}] applying defensive mode: allocations reduced by 50%")
-        
+
+        # optionally adjust orders when volatility is high
+        vol = (market_data or {}).get("volatility", 0.0)
+        vol_threshold = float(CONFIG.get("VOLATILITY_ORDER_SIZE_THRESHOLD", 0.20))
+        twap_chunks = int(CONFIG.get("TWAP_CHUNKS", 1))
+
         filled_allocs = {}
         for symbol, notional in (allocations or {}).items():
-            if self.trade_throttle.allow(f"alloc::{symbol}"):
-                filled = self._emit_order(symbol, float(notional))
-                filled_allocs[symbol] = filled
-                # Track execution efficiency (1️⃣)
-                self._track_execution_efficiency(symbol, float(notional), filled)
+            target_notional = float(notional)
+            # if volatility high and we have multiple chunks configured, slice orders
+            if vol > vol_threshold and twap_chunks > 1 and target_notional > 0:
+                chunk_size = target_notional / twap_chunks
+                total_filled = 0.0
+                self.logger.info(f"[{self.mode}] TWAP slicing {symbol} into {twap_chunks} chunks due to vol={vol:.3f}")
+                for i in range(twap_chunks):
+                    if not self.trade_throttle.allow(f"alloc::{symbol}"):
+                        total_filled += chunk_size
+                        continue
+                    filled = self._emit_order(symbol, chunk_size)
+                    total_filled += filled
+                    # small pause to simulate TWAP spacing
+                    time.sleep(0.01)
+                    # track efficiency per sub-order
+                    self._track_execution_efficiency(symbol, chunk_size, filled)
+                filled_allocs[symbol] = total_filled
             else:
-                filled_allocs[symbol] = float(notional)
-        
+                if self.trade_throttle.allow(f"alloc::{symbol}"):
+                    filled = self._emit_order(symbol, target_notional)
+                    filled_allocs[symbol] = filled
+                    # Track execution efficiency (1️⃣)
+                    self._track_execution_efficiency(symbol, target_notional, filled)
+                else:
+                    filled_allocs[symbol] = target_notional
+
         for hedge in (hedge_orders or []):
-            if self.trade_throttle.allow(f"hedge::{hedge.get('symbol','UNKNOWN')}"):
+            if self.trade_throttle.allow(f"hedge::{hedge.get('symbol','UNKNOWN')}" ):
                 self.logger.info(f"[{self.mode}] hedge_order={hedge}")
-        
+
         # update shadow book and persist PAPER-mode handoff
         self.shadow_book.apply_allocation(filled_allocs)
         self.shadow_book.apply_hedges(hedge_orders)
-        self.shadow_book.record_regime(self.mode, allocations, hedge_orders)
-        
+        vol = (market_data or {}).get("volatility", 0.0)
+        self.shadow_book.record_regime(self.mode, allocations, hedge_orders, volatility=vol)
+
         try:
             self.shadow_book.record_handoff(self.mode, filled_allocs, hedge_orders)
         except Exception:
             self.logger.exception("Failed to record handoff snapshot")
-        
+
         # Calculate both metrics (fill efficiency vs capital utilization)
         fill_eff = self.get_avg_execution_efficiency()
         total_filled = sum(filled_allocs.values())
         capital_util = total_filled / max(self.starting_capital, 1.0)
-        
+
         self.logger.info(
             f"[{self.mode}] executing allocations={filled_allocs} "
             f"fill_eff={fill_eff:.2%} "
@@ -181,7 +205,7 @@ class ExecutionEngine:
             f"latency={latency_ms:.1f}ms" + 
             (" [USING LIVE PRICES, SIMULATED EXECUTION]" if self.mode == "SHADOW" else "")
         )
-        
+
         # Return execution summary
         return {
             'mode': self.mode,

@@ -1,0 +1,40 @@
+{
+  "cycle_count": 5,
+  "cycles": [
+    {
+      "cycle": 1,
+      "timestamp": 1771231254.5422661,
+      "fill_efficiency": 0.9985063161553596,
+      "max_drawdown": 0.0,
+      "ready_for_dryrun": false
+    },
+    {
+      "cycle": 2,
+      "timestamp": 1771231255.5757294,
+      "fill_efficiency": 0.9956435474100037,
+      "max_drawdown": 0.0,
+      "ready_for_dryrun": false
+    },
+    {
+      "cycle": 3,
+      "timestamp": 1771231256.621781,
+      "fill_efficiency": 0.9912432075593056,
+      "max_drawdown": 0.0,
+      "ready_for_dryrun": false
+    },
+    {
+      "cycle": 4,
+      "timestamp": 1771231257.6504326,
+      "fill_efficiency": 0.9865704489748458,
+      "max_drawdown": 0.0,
+      "ready_for_dryrun": false
+    },
+    {
+      "cycle": 5,
+      "timestamp": 1771231258.7117238,
+      "fill_efficiency": 0.9886153024228695,
+      "max_drawdown": 0.0,
+      "ready_for_dryrun": false
+    }
+  ]
+}
